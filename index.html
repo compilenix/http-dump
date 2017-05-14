@@ -1,0 +1,58 @@
+<!doctype html>
+<html>
+
+<head>
+	<title>http-dump</title>
+	<style>
+		* {
+			margin: 0;
+			padding: 0;
+			box-sizing: border-box;
+		}
+
+		body {
+			font: 13px Helvetica, Arial;
+		}
+
+		#dataTable {
+			margin: .1em;
+			padding: 2px;
+		}
+
+	</style>
+	<script src="/jquery.min.js"></script>
+	<script>
+		let host = window.document.location.host.replace(/:.*/, '');
+		let ws = new WebSocket('ws://' + host + ':92');
+
+		ws.onmessage = (event) => {
+			let data = JSON.parse(event.data);
+			console.log(data);
+			buildHtmlTable(data);
+			window.scrollTo(0, document.body.scrollHeight);
+		};
+
+		function buildHtmlTable(data) {
+			let row$ = $('<tr/>');
+
+			row$.append($('<td/>').html(data.Date));
+			row$.append($('<td/>').html(data.Method));
+			row$.append($('<td/>').html(data.RequestUrl));
+			row$.append($('<td/>').html(data.Data));
+
+			$("#dataTable").append(row$);
+		}
+
+	</script>
+</head>
+
+<body>
+	<table id="dataTable" border="1">
+		<th>Date</th>
+		<th>Method</th>
+		<th>RequestUrl</th>
+		<th>Data</th>
+	</table>
+</body>
+
+</html>

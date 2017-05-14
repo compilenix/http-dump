@@ -3,12 +3,35 @@ const http = require("http");
 const url = require("url");
 const fs = require("fs");
 const zlib = require("zlib");
+const WebSocketServer = require('ws').Server;
 
 const cache = [
 	{
 		path: "robots.txt",
 		content: fs.readFileSync("./robots.txt", "utf8"),
 		content_type: "text/plain",
+		status_code: 200,
+		length: 0,
+		content_gzip: null,
+		content_gzip_length: 0,
+		content_deflate: null,
+		content_deflatelength: 0
+	},
+	{
+		path: "index.html",
+		content: fs.readFileSync("./index.html", "utf8"),
+		content_type: "text/html",
+		status_code: 200,
+		length: 0,
+		content_gzip: null,
+		content_gzip_length: 0,
+		content_deflate: null,
+		content_deflatelength: 0
+	},
+	{
+		path: "jquery.min.js",
+		content: fs.readFileSync("./jquery.min.js", "utf8"),
+		content_type: "application/javascript",
 		status_code: 200,
 		length: 0,
 		content_gzip: null,
@@ -27,7 +50,10 @@ cache.forEach((element) => {
 	element.content_deflate_length = Buffer.byteLength(element.content_deflate);
 });
 
+let clients = [];
+
 class Server {
+
 	/**
 	 * Creates an instance of Server.
 	 * @param {number} port
@@ -35,10 +61,78 @@ class Server {
 	 */
 	constructor(port) {
 		this.port = port;
+		this.socketServer = null;
+		this.socket = null;
 	}
 
 	start() {
 		http.createServer(Server.onRequest).listen(this.port);
+		this.socketServer = http.createServer(Server.onRequestSocketServer);
+		this.socketServer.listen(this.port + 1);
+		this.socket = new WebSocketServer({server: this.socketServer});
+
+		this.socket.on('connection', (ws) => {
+			clients.push(ws);
+
+			ws.on('close', () => {
+				ws.close();
+			});
+		});
+
+		return;
+	}
+
+	static onRequestSocketServer(request, response) {
+		Server.debugOut(request, null);
+		const queryPath = url.parse(request.url).path;
+
+		let returns = false;
+		cache.forEach((element) => {
+			if (queryPath === `/${element.path}`) {
+				Server.sendResponse(request, response, element);
+				returns = true;
+			}
+		});
+
+		if (returns) return;
+
+		Server.sendResponse(request, response, {
+			status_code: 404,
+			content: "Not Found"
+		});
+
+		return;
+	}
+
+	/**
+	 * @static
+	 * @param {http.IncomingMessage} request
+	 * @param {any} data
+	 * @memberof Server
+	 */
+	static debugOut(request, data) {
+		let stuff = {
+			Date: new Date(),
+			Method: request.method,
+			RequestUrl: request.url,
+			Data: data
+		};
+		let stuffString = JSON.stringify(stuff);
+
+		// eslint-disable-next-line no-console
+		console.log("Date: " + new Date() + "\n"
+			+ request.method + ": " + request.url + "\n"
+			+ "Headers: " + JSON.stringify(request.headers) + "\n"
+			+ "Data: " + data
+			+ "\n");
+
+		clients.forEach((ws) => {
+			if (ws.OPEN !== 1) {
+				return;
+			}
+
+			ws.send(stuffString, () => { /* ignore errors */ });
+		});
 	}
 
 	/**
@@ -99,21 +193,6 @@ class Server {
 	/**
 	 * @static
 	 * @param {http.IncomingMessage} request
-	 * @param {any} data
-	 * @memberof Server
-	 */
-	static debugOut(request, data) {
-		// eslint-disable-next-line no-console
-		console.log("Date: " + new Date() + "\n"
-			+ request.method + ": " + request.url + "\n"
-			+ "Headers: " + JSON.stringify(request.headers) + "\n"
-			+ "Data: " + data
-			+ "\n");
-	}
-
-	/**
-	 * @static
-	 * @param {http.IncomingMessage} request
 	 * @param {http.ServerResponse} response
 	 * @returns
 	 * @memberof Server
@@ -121,12 +200,15 @@ class Server {
 	static onRequest(request, response) {
 		const queryPath = url.parse(request.url).path;
 
+		let returns = false;
 		cache.forEach((element) => {
 			if (queryPath === `/${element.path}`) {
 				Server.sendResponse(request, response, element);
 				return;
 			}
 		});
+
+		if (returns) return;
 
 		if (request.method === "POST") {
 			let body = "";
@@ -157,6 +239,7 @@ class Server {
 		} else if (request.method === "GET") {
 			Server.debugOut(request, null);
 		} else {
+			Server.debugOut(request, null);
 			Server.sendResponse(request, response, {
 				status_code: 501,
 				content: "Not Implemented"
