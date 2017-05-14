@@ -5,8 +5,6 @@
 	<title>http-dump</title>
 	<style>
 		* {
-			margin: 0;
-			padding: 0;
 			box-sizing: border-box;
 		}
 
@@ -14,7 +12,7 @@
 			font: 13px Helvetica, Arial;
 		}
 
-		#dataTable {
+		* {
 			margin: .1em;
 			padding: 2px;
 		}
@@ -34,11 +32,12 @@
 
 		function buildHtmlTable(data) {
 			let row$ = $('<tr/>');
+			let pre$ = $('<pre/>');
 
-			row$.append($('<td/>').html(data.Date));
-			row$.append($('<td/>').html(data.Method));
-			row$.append($('<td/>').html(data.RequestUrl));
-			row$.append($('<td/>').html(data.Data));
+			row$.append($('<td/>').html($('<pre/>').html(data.Date)));
+			row$.append($('<td/>').html($('<pre/>').html(data.Method)));
+			row$.append($('<td/>').html($('<pre/>').html(data.RequestUrl)));
+			row$.append($('<td/>').html($('<pre/>').html(data.Data)));
 
 			$("#dataTable").append(row$);
 		}
