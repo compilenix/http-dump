@@ -97,8 +97,9 @@ class Server {
 		if (returns) return;
 
 		Server.sendResponse(request, response, {
-			status_code: 404,
-			content: "Not Found"
+			status_code: 302,
+			content: "Moved",
+			location: "/index.html"
 		});
 
 		return;
@@ -145,7 +146,7 @@ class Server {
 	static sendResponse(request, response, element) {
 		/** @type {any} */
 		let data;
-		const contentBuffer = new Buffer(element.content);
+		const contentBuffer = new Buffer(element.content || "");
 		element.length = Buffer.byteLength(element.content, "utf8");
 		element.content_gzip = zlib.gzipSync(contentBuffer, { level: zlib.Z_BEST_COMPRESSION, memLevel: 9, flush: zlib.Z_NO_FLUSH });
 		element.content_gzip_length = Buffer.byteLength(element.content_gzip);
@@ -185,6 +186,11 @@ class Server {
 		response.setHeader("Content-Type", element.content_type || "text/plain");
 		response.setHeader("Connection", "close");
 		response.removeHeader("Date");
+
+		if (element.status_code === 302) {
+			response.setHeader("Location", "/index.html");
+		}
+
 		response.writeHead(element.status_code || 500);
 		response.end(data || "");
 		return;
