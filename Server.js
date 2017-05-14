@@ -210,7 +210,7 @@ class Server {
 		cache.forEach((element) => {
 			if (queryPath === `/${element.path}`) {
 				Server.sendResponse(request, response, element);
-				return;
+				returns = true;
 			}
 		});
 
