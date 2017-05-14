@@ -1,6 +1,6 @@
 {
 	"name": "http-dump",
-	"version": "0.1.0",
+	"version": "0.1.1",
 	"description": "",
 	"author": "Compilenix <Compilenix@compilenix.org>",
 	"main": "app.js",
@@ -8,15 +8,8 @@
 		"start": "npm install && node app.js"
 	},
 	"dependencies": {
-		"http2": "*",
 		"use-strict": "*"
 	},
-	"typeAcquisition": {
-        "include": [
-            "http",
-			"http2"
-        ]
-    },
 	"license": "MIT",
 	"repository": {
 		"type": "git",

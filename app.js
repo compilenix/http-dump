@@ -1,2 +1,3 @@
 require("use-strict");
-new (require("./Server.js"))().start();
+const port = 80;
+new (require("./Server.js"))(port).start();

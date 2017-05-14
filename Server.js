@@ -1,3 +1,4 @@
+const querystring = require("querystring");
 const http = require("http");
 const url = require("url");
 const fs = require("fs");
@@ -27,10 +28,18 @@ cache.forEach((element) => {
 });
 
 class Server {
-	start() {
-		http.createServer(Server.onRequest).listen(80);
+	/**
+	 * Creates an instance of Server.
+	 * @param {number} port
+	 * @memberof Server
+	 */
+	constructor(port) {
+		this.port = port;
 	}
 
+	start() {
+		http.createServer(Server.onRequest).listen(this.port);
+	}
 
 	/**
 	 * @static
@@ -80,9 +89,26 @@ class Server {
 		}
 
 		response.setHeader("Content-Type", element.content_type || "text/plain");
+		response.setHeader("Connection", "close");
+		response.removeHeader("Date");
 		response.writeHead(element.status_code || 500);
 		response.end(data || "");
 		return;
+	}
+
+	/**
+	 * @static
+	 * @param {http.IncomingMessage} request
+	 * @param {any} data
+	 * @memberof Server
+	 */
+	static debugOut(request, data) {
+		// eslint-disable-next-line no-console
+		console.log("Date: " + new Date() + "\n"
+			+ request.method + ": " + request.url + "\n"
+			+ "Headers: " + JSON.stringify(request.headers) + "\n"
+			+ "Data: " + data
+			+ "\n");
 	}
 
 	/**
@@ -110,7 +136,7 @@ class Server {
 				if (body.length + postData.length < 5e7) { // // 50 Megabyte
 					body += postData;
 				} else {
-					console.log(`${request.method}: ${request.url} -> Request entity too large`);
+					Server.debugOut(request, "Request entity too large");
 					Server.sendResponse(request, response, {
 						status_code: 413,
 						content: "Request entity too large"
@@ -120,10 +146,16 @@ class Server {
 			});
 
 			request.on("end", () => {
-				console.log(`${request.method}: ${request.url}` + "\nData: " + body);
+				switch(request.headers["content-type"]) {
+					case "application/x-www-form-urlencoded":
+						body = querystring.unescape(body);
+						break;
+				}
+
+				Server.debugOut(request, body);
 			});
 		} else if (request.method === "GET") {
-			console.log(`${request.method}: ${request.url}`);
+			Server.debugOut(request, null);
 		} else {
 			Server.sendResponse(request, response, {
 				status_code: 501,
