@@ -83,7 +83,6 @@ class Server {
 	}
 
 	static onRequestSocketServer(request, response) {
-		Server.debugOut(request, null);
 		const queryPath = url.parse(request.url).path;
 
 		let returns = false;
