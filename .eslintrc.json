@@ -29,7 +29,6 @@
 			"always"
 		]
 	},
-	"eqeqeq": 2,
 	"ecmaFeatures": {
 		"classes": true,
 		"defaultParams": true,
