@@ -3,10 +3,10 @@ const http = require("http");
 const url = require("url");
 const fs = require("fs");
 const zlib = require("zlib");
-const WebSocketServer = require('ws').Server;
+const WebSocketServer = require("ws").Server;
+const htmlencode = require("htmlencode").Encoder("htmlEncode").htmlEncode;
 
-const cache = [
-	{
+const cache = [{
 		path: "robots.txt",
 		content: fs.readFileSync("./robots.txt", "utf8"),
 		content_type: "text/plain",
@@ -41,12 +41,20 @@ const cache = [
 	}
 ];
 
-cache.forEach((element) => {
+cache.forEach(element => {
 	const contentBuffer = new Buffer(element.content);
 	element.length = Buffer.byteLength(element.content, "utf8");
-	element.content_gzip = zlib.gzipSync(contentBuffer, { level: zlib.Z_BEST_COMPRESSION, memLevel: 9, flush: zlib.Z_NO_FLUSH });
+	element.content_gzip = zlib.gzipSync(contentBuffer, {
+		level: zlib.Z_BEST_COMPRESSION,
+		memLevel: 9,
+		flush: zlib.Z_NO_FLUSH
+	});
 	element.content_gzip_length = Buffer.byteLength(element.content_gzip);
-	element.content_deflate = zlib.deflateSync(contentBuffer, { level: zlib.Z_BEST_COMPRESSION, memLevel: 9, flush: zlib.Z_NO_FLUSH });
+	element.content_deflate = zlib.deflateSync(contentBuffer, {
+		level: zlib.Z_BEST_COMPRESSION,
+		memLevel: 9,
+		flush: zlib.Z_NO_FLUSH
+	});
 	element.content_deflate_length = Buffer.byteLength(element.content_deflate);
 });
 
@@ -69,9 +77,11 @@ class Server {
 		http.createServer(Server.onRequest).listen(this.port);
 		this.socketServer = http.createServer(Server.onRequestSocketServer);
 		this.socketServer.listen(this.port + 1);
-		this.socket = new WebSocketServer({server: this.socketServer});
+		this.socket = new WebSocketServer({
+			server: this.socketServer
+		});
 
-		this.socket.on('connection', (ws) => {
+		this.socket.on('connection', ws => {
 			clients.push(ws);
 
 			ws.on('close', () => {
@@ -86,7 +96,7 @@ class Server {
 		const queryPath = url.parse(request.url).path;
 
 		let returns = false;
-		cache.forEach((element) => {
+		cache.forEach(element => {
 			if (queryPath === `/${element.path}`) {
 				Server.sendResponse(request, response, element);
 				returns = true;
@@ -113,20 +123,16 @@ class Server {
 	static debugOut(request, data) {
 		let stuff = {
 			Date: new Date(),
-			Method: request.method,
-			RequestUrl: request.url,
-			Data: data
+			Method: htmlencode(request.method),
+			RequestUrl: htmlencode(request.url),
+			Data: htmlencode(data)
 		};
 		let stuffString = JSON.stringify(stuff);
 
 		// eslint-disable-next-line no-console
-		console.log("Date: " + new Date() + "\n"
-			+ request.method + ": " + request.url + "\n"
-			+ "Headers: " + JSON.stringify(request.headers) + "\n"
-			+ "Data: " + data
-			+ "\n");
+		console.log(`Date: ${new Date()}\n${request.method}: ${request.url}\nHeaders: ${JSON.stringify(request.headers)}\nData: ${data}\n`);
 
-		clients.forEach((ws) => {
+		clients.forEach(ws => {
 			if (ws.OPEN !== 1) {
 				return;
 			}
@@ -147,9 +153,17 @@ class Server {
 		let data;
 		const contentBuffer = new Buffer(element.content || "");
 		element.length = Buffer.byteLength(element.content, "utf8");
-		element.content_gzip = zlib.gzipSync(contentBuffer, { level: zlib.Z_BEST_COMPRESSION, memLevel: 9, flush: zlib.Z_NO_FLUSH });
+		element.content_gzip = zlib.gzipSync(contentBuffer, {
+			level: zlib.Z_BEST_COMPRESSION,
+			memLevel: 9,
+			flush: zlib.Z_NO_FLUSH
+		});
 		element.content_gzip_length = Buffer.byteLength(element.content_gzip);
-		element.content_deflate = zlib.deflateSync(contentBuffer, { level: zlib.Z_BEST_COMPRESSION, memLevel: 9, flush: zlib.Z_NO_FLUSH });
+		element.content_deflate = zlib.deflateSync(contentBuffer, {
+			level: zlib.Z_BEST_COMPRESSION,
+			memLevel: 9,
+			flush: zlib.Z_NO_FLUSH
+		});
 		element.content_deflate_length = Buffer.byteLength(element.content_deflate);
 
 		if (request.headers["accept-encoding"]) { // if accept-encoding
@@ -206,7 +220,7 @@ class Server {
 		const queryPath = url.parse(request.url).path;
 
 		let returns = false;
-		cache.forEach((element) => {
+		cache.forEach(element => {
 			if (queryPath === `/${element.path}`) {
 				Server.sendResponse(request, response, element);
 				returns = true;
@@ -215,47 +229,60 @@ class Server {
 
 		if (returns) return;
 
-		if (request.method === "POST") {
-			let body = "";
+		let requestHasPayload = false;
+		let requestPayload = "";
+		switch (request.method) {
+			case "PUT":
+			case "POST":
+				requestHasPayload = true;
+				request.on("data", postData => {
+					if (requestPayload.length + postData.length < 1e6) { // ~1 Megabyte
+						requestPayload += postData;
+					} else {
+						Server.debugOut(request, "Request entity too large");
+						Server.sendResponse(request, response, {
+							status_code: 413,
+							content: "Request entity too large"
+						});
+						return;
+					}
+				});
 
-			request.on("data", (postData) => {
-				// reading http POST body
-				if (body.length + postData.length < 5e7) { // // 50 Megabyte
-					body += postData;
-				} else {
-					Server.debugOut(request, "Request entity too large");
+				request.on("end", () => {
+					switch (request.headers["content-type"]) {
+						case "application/x-www-form-urlencoded":
+							requestPayload = querystring.unescape(requestPayload);
+							break;
+					}
+
 					Server.sendResponse(request, response, {
-						status_code: 413,
-						content: "Request entity too large"
+						status_code: 200,
+						content: "OK"
 					});
-					return;
-				}
-			});
+					Server.debugOut(request, requestPayload);
+				});
+				break;
 
-			request.on("end", () => {
-				switch(request.headers["content-type"]) {
-					case "application/x-www-form-urlencoded":
-						body = querystring.unescape(body);
-						break;
-				}
+			case "HEAD":
+			case "GET":
+				Server.debugOut(request, null);
+				break;
 
-				Server.debugOut(request, body);
-			});
-		} else if (request.method === "GET") {
-			Server.debugOut(request, null);
-		} else {
-			Server.debugOut(request, null);
-			Server.sendResponse(request, response, {
-				status_code: 501,
-				content: "Not Implemented"
-			});
-			return;
+			default:
+				Server.debugOut(request, null);
+				Server.sendResponse(request, response, {
+					status_code: 501,
+					content: "Not Implemented"
+				});
+				return;
 		}
 
-		Server.sendResponse(request, response, {
-			status_code: 200,
-			content: "OK"
-		});
+		if (!requestHasPayload) {
+			Server.sendResponse(request, response, {
+				status_code: 200,
+				content: "OK"
+			});
+		}
 
 		return;
 	}
