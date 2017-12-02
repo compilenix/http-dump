@@ -8,7 +8,8 @@
     "start": "npm install && node app.js"
   },
   "dependencies": {
-    "use-strict": "*",
+    "jquery": "*",
+    "use-strict": "^1.0.1",
     "ws": "^2.3.1"
   },
   "license": "MIT",
