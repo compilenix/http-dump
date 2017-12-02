@@ -6,19 +6,20 @@
 	<style>
 		* {
 			box-sizing: border-box;
+			margin: .1em;
+			padding: 2px;
 		}
 
 		body {
 			font: 13px Helvetica, Arial;
 		}
 
-		* {
-			margin: .1em;
-			padding: 2px;
+		pre {
+			white-space: pre-wrap;
 		}
 
 	</style>
-	<script src="/jquery.min.js"></script>
+	<script src="jquery.min.js"></script>
 	<script>
 		let host = window.document.location.host.replace(/:.*/, '');
 		let ws = new WebSocket('ws://' + host + ':9992');
