@@ -1,3 +1,6 @@
+# Donate if you want
+https://www.paypal.me/compilenix
+
 http-dump
 ========
 
