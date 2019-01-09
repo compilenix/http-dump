@@ -1,7 +1,5 @@
 // Place your settings in this file to overwrite default and user settings.
 {
-	"editor.useTabStops": false,
-	"editor.insertSpaces": true,
 	"editor.trimAutoWhitespace": true,
 	"editor.formatOnType": true,
 	"files.encoding": "utf8",
