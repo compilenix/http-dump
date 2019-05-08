@@ -123,7 +123,8 @@ class Server {
       Date: new Date(),
       Method: htmlencode(request.method),
       RequestUrl: htmlencode(request.url),
-      Data: htmlencode(data)
+      Data: htmlencode(data),
+      Headers: JSON.stringify(request.headers, /* replacer */ null, 2)
     }
     let stuffString = JSON.stringify(stuff)
 

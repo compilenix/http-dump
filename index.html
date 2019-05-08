@@ -39,6 +39,7 @@
 			row$.append($('<td/>').html($('<pre/>').html(data.Method)));
 			row$.append($('<td/>').html($('<pre/>').html(data.RequestUrl)));
 			row$.append($('<td/>').html($('<pre/>').html(data.Data)));
+			row$.append($('<td/>').html($('<pre/>').html(data.Headers)));
 
 			$("#dataTable").append(row$);
 		}
@@ -52,6 +53,7 @@
 		<th>Method</th>
 		<th>RequestUrl</th>
 		<th>Data</th>
+		<th>Headers</th>
 	</table>
 </body>
 
