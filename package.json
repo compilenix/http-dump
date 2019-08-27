@@ -17,16 +17,16 @@
     "htmlencode": "0.0.4",
     "jquery": "^3.4.1",
     "use-strict": "^1.0.1",
-    "ws": "^7.0.0"
+    "ws": "^7.1.2"
   },
   "devDependencies": {
-    "eslint": "^5.16.0",
-    "eslint-config-standard": "^12.0.0",
-    "eslint-plugin-import": "^2.17.2",
-    "eslint-plugin-node": "^9.0.1",
-    "eslint-plugin-promise": "^4.1.1",
-    "eslint-plugin-standard": "^4.0.0",
-    "standard": "^12.0.1"
+    "eslint": "^6.2.2",
+    "eslint-config-standard": "^14.0.1",
+    "eslint-plugin-import": "^2.18.2",
+    "eslint-plugin-node": "^9.1.0",
+    "eslint-plugin-promise": "^4.2.1",
+    "eslint-plugin-standard": "^4.0.1",
+    "standard": "^14.0.2"
   },
   "optionalDependencies": {
     "bufferutil": "^4.0.1",
