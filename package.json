@@ -17,7 +17,7 @@
     "htmlencode": "0.0.4",
     "jquery": "^3.4.1",
     "use-strict": "^1.0.1",
-    "ws": "^7.1.2"
+    "ws": "^7.4.6"
   },
   "devDependencies": {
     "eslint": "^6.2.2",
